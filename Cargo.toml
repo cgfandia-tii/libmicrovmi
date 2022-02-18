@@ -34,7 +34,7 @@ nix = "^0.23.0"
 enum-iterator = "0.7.0"
 thiserror = "1.0"
 libc = { version = "0.2.58", optional = true }
-xenctrl = { version = "=0.4.7", optional = true }
+xenctrl = { version = "=0.4.9", optional = true }
 xenstore-rs = { version = "=0.3.2", optional = true }
 xenforeignmemory = { version = "=0.2.3", optional = true }
 xenevtchn = { version = "=0.1.6", optional = true }

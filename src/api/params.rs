@@ -97,7 +97,7 @@ pub struct CommonInitParams {
 /// // memflow.connector_name: mandatory
 /// // memflow.connector_args: optional
 /// let init_params = DriverInitParams {
-///     memflow: Some(MemflowInitParams { connector_name: String::from("qemu_procfs"), ///
+///     memflow: Some(MemflowInitParams { connector_name: String::from("qemu_procfs"),
 ///         ..Default::default()}),
 ///     ..Default::default()
 /// };

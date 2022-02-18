@@ -1,4 +1,5 @@
 use super::kvm::KVM;
+use super::xen::Xen;
 use microvmi::api::Introspectable;
 
 pub trait Context: Send {
@@ -10,6 +11,8 @@ pub trait Context: Send {
 pub fn init_context() -> Box<dyn Context> {
     if cfg!(feature = "kvm") {
         Box::new(KVM {})
+    } else if cfg!(feature = "xen") {
+        Box::new(Xen {})
     } else {
         panic!("Integration tests need to be run with a specific driver enabled")
     }
