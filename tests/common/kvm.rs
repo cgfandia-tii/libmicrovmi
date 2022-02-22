@@ -5,19 +5,22 @@ use microvmi::api::params::{CommonInitParams, DriverInitParams, KVMInitParams};
 use microvmi::api::{DriverType, Introspectable};
 use microvmi::init;
 
-use super::config::{KVMI_SOCKET, VIRSH_URI, VM_NAME};
+use super::config::{CommonConfig, KVMConfig};
 use crate::common::context::Context;
 
-pub struct KVM;
+#[derive(Default, Clone)]
+pub struct KVM {
+    config: KVMConfig,
+}
 
 impl Context for KVM {
     /// restore VM state from internal QEMU snapshot
     fn setup(&self) {
         debug!("setup test");
         Command::new("virsh")
-            .arg(format!("--connect={}", VIRSH_URI))
+            .arg(format!("--connect={}", self.config.virsh_uri))
             .arg("snapshot-revert")
-            .arg(VM_NAME)
+            .arg(&self.config.common.vm)
             .arg("--current")
             .arg("--running")
             .stdout(Stdio::null())
@@ -34,10 +37,10 @@ impl Context for KVM {
             Some(DriverType::KVM),
             Some(DriverInitParams {
                 common: Some(CommonInitParams {
-                    vm_name: String::from(VM_NAME),
+                    vm_name: self.config.common.vm.clone(),
                 }),
                 kvm: Some(KVMInitParams::UnixSocket {
-                    path: String::from(KVMI_SOCKET),
+                    path: self.config.kvmi_socket.to_string(),
                 }),
                 ..Default::default()
             }),
@@ -49,9 +52,9 @@ impl Context for KVM {
     fn teardown(&self) {
         debug!("teardown test");
         Command::new("virsh")
-            .arg(format!("--connect={}", VIRSH_URI))
+            .arg(format!("--connect={}", self.config.virsh_uri))
             .arg("destroy")
-            .arg(VM_NAME)
+            .arg(&self.config.common.vm)
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .status()
@@ -59,5 +62,9 @@ impl Context for KVM {
             .success()
             .then(|| 0)
             .expect("Failed to run virsh destroy");
+    }
+
+    fn config(&self) -> &CommonConfig {
+        &self.config.common
     }
 }

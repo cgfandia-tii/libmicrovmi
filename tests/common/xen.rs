@@ -5,26 +5,28 @@ use microvmi::api::params::{CommonInitParams, DriverInitParams};
 use microvmi::api::{DriverType, Introspectable};
 use microvmi::init;
 
-use super::config::{VIRSH_URI_XEN, VM_NAME};
+use super::config::{CommonConfig, XenConfig};
 use crate::common::context::Context;
 
-pub struct Xen;
+#[derive(Default, Clone)]
+pub struct Xen {
+    config: XenConfig,
+}
 
 impl Context for Xen {
-    /// restore VM state from internal QEMU snapshot
+    /// restore VM from the Xen checkpoint file
     fn setup(&self) {
         debug!("setup test");
-        Command::new("virsh")
-            .arg(format!("--connect={}", VIRSH_URI_XEN))
-            .arg("start")
-            .arg(VM_NAME)
+        Command::new("xl")
+            .arg("restore")
+            .arg(&self.config.checkpoint)
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .status()
-            .expect("Failed to start virsh")
+            .expect("Failed to start xl")
             .success()
             .then(|| 0)
-            .expect("Failed to run virsh start");
+            .expect("Failed to restore Xen checkpoint");
     }
 
     fn init_driver(&self) -> Box<dyn Introspectable> {
@@ -32,27 +34,30 @@ impl Context for Xen {
             Some(DriverType::Xen),
             Some(DriverInitParams {
                 common: Some(CommonInitParams {
-                    vm_name: String::from(VM_NAME),
+                    vm_name: self.config.common.vm.clone(),
                 }),
                 ..Default::default()
             }),
         )
-        .expect("Failed to init libmicrovmi")
+        .expect("Failed to init Xen libmicrovmi driver")
     }
 
     /// shutdown VM
     fn teardown(&self) {
         debug!("teardown test");
-        Command::new("virsh")
-            .arg(format!("--connect={}", VIRSH_URI_XEN))
+        Command::new("xl")
             .arg("destroy")
-            .arg(VM_NAME)
+            .arg(&self.config.common.vm)
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .status()
-            .expect("Failed to start virsh")
+            .expect("Failed to start xl")
             .success()
             .then(|| 0)
-            .expect("Failed to run virsh destroy");
+            .expect("Failed to destroy Xen VM");
+    }
+
+    fn config(&self) -> &CommonConfig {
+        &self.config.common
     }
 }

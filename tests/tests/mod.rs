@@ -1,3 +1,4 @@
+use super::common::config::CommonConfig;
 use microvmi::api::Introspectable;
 
 pub mod events;
@@ -8,7 +9,7 @@ pub mod pause;
 #[derive(Debug)]
 pub struct IntegrationTest {
     pub name: &'static str,
-    pub test_fn: fn(Box<dyn Introspectable>),
+    pub test_fn: fn(Box<dyn Introspectable>, CommonConfig),
 }
 
 inventory::collect!(IntegrationTest);
